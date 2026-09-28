@@ -1,0 +1,35 @@
+# Word / Excel 临时文件（打开文档时会生成 ~$ 开头的锁文件）
+~$*.docx
+~$*.doc
+~$*.xlsx
+
+# 系统文件
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 视频：不进仓库，中期考核要求单独打包成 zip 作为邮件附件
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.wmv
+
+# 设计源文件：放网盘，仓库里只放导出的图片
+*.f3d
+*.f3z
+*.step
+*.stp
+*.iges
+*.sldprt
+*.sldasm
+
+# 压缩包（视频包也不要提交）
+*.zip
+*.7z
+*.rar
+
+# 临时文件
+*.tmp
+*.log
+*.bak
