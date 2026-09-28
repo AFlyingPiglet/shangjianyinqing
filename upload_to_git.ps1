@@ -152,16 +152,45 @@ try {
 
     # 4) 推送
     Write-Step '推送到远端'
+
+    # 关键一步：有些仓库的默认分支叫 master，而远端一般用 main，
+    # 不统一就会出现 "src refspec main does not match any" 这种错。
+    $hasCommit = (Invoke-Git rev-parse --verify HEAD).Code -eq 0
+    if ($hasCommit) {
+        $branch = Get-GitText rev-parse --abbrev-ref HEAD
+        if ($branch -and $branch -ne 'main') {
+            $rename = Invoke-Git branch -M main
+            if ($rename.Code -eq 0) {
+                Write-Ok "本地分支已改名为 main（原来是 $branch）"
+            } else {
+                Write-Warn "分支改名失败（原来叫 $branch），继续尝试推送"
+            }
+        } else {
+            Write-Ok "本地分支：main"
+        }
+    } else {
+        Write-Warn '本地还没有提交（仓库是空的），先跳过分支检查'
+    }
+
     Write-Warn '第一次推送会弹出登录窗口，请选「Sign in with your browser / 用浏览器登录」'
     $push = Invoke-Git push -u origin main
     $push.Output | ForEach-Object { Write-Host "     $_" }
     if ($push.Code -ne 0) {
         # 最常见的情况：远端仓库不是空的（建仓库时勾了 README），先自动合并再推
-        Write-Host ''
-        Write-Warn '推送被拒绝，正在尝试自动合并远端已有内容（例如建仓库时勾了 README）...'
-        $pull = Invoke-Git pull origin main --allow-unrelated-histories --no-edit
-        $pull.Output | ForEach-Object { Write-Host "     $_" }
-        if ($pull.Code -eq 0) {
+        $remoteHeads = Invoke-Git ls-remote --heads origin main
+        $hasRemoteMain = @($remoteHeads.Output | Where-Object { "$_" -match 'refs/heads/main' }).Count -gt 0
+        if ($hasRemoteMain) {
+            Write-Host ''
+            Write-Warn '推送被拒绝，正在尝试自动合并远端已有内容（例如建仓库时勾了 README）...'
+            $pull = Invoke-Git pull origin main --allow-unrelated-histories --no-edit
+            $pull.Output | ForEach-Object { Write-Host "     $_" }
+            if ($pull.Code -eq 0) {
+                $push = Invoke-Git push -u origin main
+                $push.Output | ForEach-Object { Write-Host "     $_" }
+            }
+        } else {
+            Write-Host ''
+            Write-Warn '远端仓库还是空的（没有 main 分支），无需合并，直接重试推送...'
             $push = Invoke-Git push -u origin main
             $push.Output | ForEach-Object { Write-Host "     $_" }
         }
