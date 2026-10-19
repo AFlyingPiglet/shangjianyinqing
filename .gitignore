@@ -24,6 +24,9 @@ desktop.ini
 *.sldprt
 *.sldasm
 
+# 例外：一号车打印件 STEP（约 1.7MB，随文档一起提交，供评委核对模型）
+!docs/models/**/*.step
+
 # 压缩包（视频包也不要提交）
 *.zip
 *.7z
